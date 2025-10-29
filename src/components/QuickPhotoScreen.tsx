@@ -404,6 +404,17 @@ export function QuickPhotoScreen({
               <X className="mr-2" />
               Cancel
             </Button>
+            {!allPhotosCaptured && (
+              <Button
+                onClick={onNext}
+                variant="outline"
+                size="lg"
+                className="h-16 text-lg flex-1 active:scale-95 transition-transform select-none border-2 border-slate-400 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:border-slate-500"
+              >
+                Skip Photo
+                <ArrowRight className="ml-2" />
+              </Button>
+            )}
             <Button
               onClick={onNext}
               disabled={!allPhotosCaptured}

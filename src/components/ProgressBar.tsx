@@ -73,7 +73,7 @@ export const ProgressBar = memo(function ProgressBar({ currentStep, totalSteps, 
                     >
                       {index + 1}
                     </button>
-                    <span className="text-[9px] sm:text-[10px] leading-tight">{label}</span>
+                    <span className="text-[12px] sm:text-[12px] leading-tight">{label}</span>
                   </div>
                 </div>
               );

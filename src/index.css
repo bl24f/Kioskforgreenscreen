@@ -1644,6 +1644,10 @@
     border-color: var(--color-slate-300);
   }
 
+  .border-slate-400 {
+    border-color: var(--color-slate-400);
+  }
+
   .border-slate-500 {
     border-color: var(--color-slate-500);
   }
@@ -2546,6 +2550,10 @@
 
   .text-\[10px\] {
     font-size: 10px;
+  }
+
+  .text-\[12px\] {
+    font-size: 12px;
   }
 
   .leading-none {
@@ -3889,8 +3897,8 @@
   }
 
   @media (width >= 40rem) {
-    .sm\:text-\[10px\] {
-      font-size: 10px;
+    .sm\:text-\[12px\] {
+      font-size: 12px;
     }
   }
 

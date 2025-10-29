@@ -61,17 +61,30 @@ export function UploadFinalPhotoTab() {
     const filesArray = Array.from(files);
     const validFiles: File[] = [];
     
-    // Validate files first
+    // Validate files first - accept all common image formats
     for (const file of filesArray) {
-      const isValidType = file.type === 'image/jpeg' || file.type === 'image/jpg';
-      const hasValidExtension = file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg');
+      const validImageTypes = [
+        'image/jpeg',
+        'image/jpg', 
+        'image/png',
+        'image/gif',
+        'image/bmp',
+        'image/webp',
+        'image/heic',
+        'image/heif',
+        'image/tiff',
+        'image/svg+xml'
+      ];
       
-      if (isValidType || hasValidExtension) {
+      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic', '.heif', '.tiff', '.tif', '.svg'];
+      const hasValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+      
+      if (validImageTypes.includes(file.type) || hasValidExtension) {
         validFiles.push(file);
       } else {
         setUploadStatus({
           type: 'error',
-          message: `"${file.name}" is not a valid file type. Only JPG/JPEG files are accepted.`
+          message: `"${file.name}" is not a valid image file.`
         });
       }
     }
@@ -216,7 +229,7 @@ export function UploadFinalPhotoTab() {
       <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
         <h3 className="text-xl font-semibold text-white mb-4">Upload Final Photos</h3>
         <p className="text-slate-300 text-sm mb-4">
-          Upload final green screen photos (JPG/JPEG only). The system will automatically match them to orders based on the order number in the filename.
+          Upload final green screen photos (all image formats supported). The system will automatically match them to orders based on the order number in the filename.
         </p>
 
         {/* File naming instructions */}
@@ -239,13 +252,13 @@ export function UploadFinalPhotoTab() {
         <div className="space-y-4">
           <div>
             <Label htmlFor="file-upload" className="text-white mb-2 block">
-              Select Final Photos (JPG/JPEG only)
+              Select Final Photos (All Image Formats)
             </Label>
             <input
               ref={fileInputRef}
               id="file-upload"
               type="file"
-              accept=".jpg,.jpeg,image/jpeg"
+              accept="image/*,.jpg,.jpeg,.png,.gif,.bmp,.webp,.heic,.heif,.tiff,.tif,.svg"
               multiple
               onChange={handleFileSelect}
               className="flex h-12 w-full rounded-md px-3 py-2 text-sm bg-slate-700 text-white border-2 border-slate-600 file:bg-blue-600 file:text-white file:border-0 file:mr-4 file:py-2 file:px-4 file:rounded file:cursor-pointer hover:file:bg-blue-700 cursor-pointer"

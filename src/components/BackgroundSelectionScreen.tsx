@@ -324,10 +324,7 @@ export function BackgroundSelectionScreen({
             </p>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-900">
-                <span className="font-semibold">Pricing:</span> First background is included. Each additional background is <span className="font-semibold">$2.50</span> (max 4 additional).
-              </p>
-              <p className="text-xs text-blue-700 mt-1">
-                Extra backgrounds are always free. Custom uploaded backgrounds cost $5.00 each.
+                <span className="font-semibold">Pricing:</span> First background is included. Each additional background is <span className="font-semibold">$2.50</span>.
               </p>
             </div>
             {(() => {
