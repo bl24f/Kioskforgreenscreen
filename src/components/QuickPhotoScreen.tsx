@@ -99,7 +99,59 @@ export function QuickPhotoScreen({
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [camErr, setCamErr] = useState<string>("");
 
+  const stopStream = () => {
+    if (stream) {
+    stream.getTracks().forEach((t) => t.stop());
+    setStream(null);
+  }
+};
+
+  const startCamera = async () => {
+  setCamErr("");
+  stopStream();
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCamErr("Camera API not supported in this browser.");
+      return;
+    }
+
+    const s = await navigator.mediaDevices.getUserMedia({
+      audio: false, // avoid extra permission prompt
+      video: {
+        // On mobile, swap to { ideal: "environment" } for back camera
+        facingMode: { ideal: "user" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    });
+
+    setStream(s);
+    if (videoRef.current) {
+      videoRef.current.srcObject = s;
+      // Must be triggered by a user gesture (clicking the Enable Camera button)
+      await videoRef.current.play();
+    }
+  } catch (e: any) {
+    const name = e?.name ?? "Error";
+    setCamErr(
+      name === "NotAllowedError"      ? "Permission denied. Allow camera for this site."
+      : name === "NotFoundError"      ? "No camera found on this device."
+      : name === "NotReadableError"   ? "Camera is in use by another app/tab."
+      : name === "OverconstrainedError" ? "Requested camera settings not available."
+      : e?.message || String(e)
+    );
+  }
+};
+
+// Cleanup on unmount so the camera turns off when leaving this screen
+useEffect(() => {
+  return () => stopStream();
+}, []);
+  
   const totalPhotos = 1; // Always take only one photo regardless of numberOfPeople
   const allPhotosCaptured = capturedPhotos.length === totalPhotos;
 
