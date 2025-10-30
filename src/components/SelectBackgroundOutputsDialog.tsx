@@ -483,10 +483,10 @@ export function SelectBackgroundOutputsDialog({
           })}
         </div>
 
-        <DialogFooter className="flex gap-4 justify-center pt-4 border-t mt-4 flex-shrink-0">
+        <div className="flex gap-4 justify-center pt-4 border-t mt-4 flex-shrink-0">
           <Button
             onClick={() => onOpenChange(false)}
-            variant="outline"
+            variant="destructive"
             size="lg"
             className="h-14 w-[200px] text-lg border-2"
           >
@@ -500,7 +500,7 @@ export function SelectBackgroundOutputsDialog({
           >
             Confirm Selection
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

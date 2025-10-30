@@ -235,9 +235,9 @@ export function QuickPhotoScreen({
         onClick={handleGearClick}
         variant="ghost"
         size="sm"
-        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-20 h-20"
+        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-40 h-40"
       >
-        <Settings className="w-10 h-10" />
+        <Settings className="w-20 h-20" />
       </Button>
       <div className="max-w-7xl w-full">
         <div className="bg-white rounded-2xl p-8 shadow-2xl border border-slate-200">
@@ -336,6 +336,15 @@ export function QuickPhotoScreen({
                       <Camera className="mr-2" />
                       {isCapturing ? "Capturing..." : "Capture Mock Photo"}
                     </Button>
+                    <Button
+                      onClick={onNext}
+                      variant="secondary"
+                      size="lg"
+                      className="h-16 text-lg flex-1 active:scale-95 transition-transform select-none border-2 border-slate-400 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:border-slate-500"
+                    >
+                      Skip Photo
+                      <ArrowRight className="ml-2" />
+                    </Button>
                   </div>
                 )}
 
@@ -404,17 +413,6 @@ export function QuickPhotoScreen({
               <X className="mr-2" />
               Cancel
             </Button>
-            {!allPhotosCaptured && (
-              <Button
-                onClick={onNext}
-                variant="outline"
-                size="lg"
-                className="h-16 text-lg flex-1 active:scale-95 transition-transform select-none border-2 border-slate-400 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:border-slate-500"
-              >
-                Skip Photo
-                <ArrowRight className="ml-2" />
-              </Button>
-            )}
             <Button
               onClick={onNext}
               disabled={!allPhotosCaptured}

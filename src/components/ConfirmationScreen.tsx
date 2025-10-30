@@ -207,9 +207,9 @@ export function ConfirmationScreen({
         onClick={handleGearClick}
         variant="ghost"
         size="sm"
-        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-20 h-20"
+        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-40 h-40"
       >
-        <Settings className="w-10 h-10" />
+        <Settings className="w-20 h-20" />
       </Button>
       <div className="max-w-4xl w-full bg-white rounded-2xl p-8 shadow-2xl border border-slate-200">
         <div className="flex items-center justify-between mb-8">

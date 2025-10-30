@@ -52,8 +52,6 @@ interface BackgroundSelectionScreenProps {
   setShowFreeDayOption?: (value: boolean) => void;
 }
 
-const MAX_ADDITIONAL_BACKGROUNDS = 4; // First background included, can add 4 more (5 total max)
-
 const backgrounds: Background[] = [
   { id: 1, name: "Tropical Beach", url: "https://images.unsplash.com/photo-1702743599501-a821d0b38b66?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGJlYWNoJTIwcGFyYWRpc2V8ZW58MXx8fHwxNzYxMDM1NTM2fDA&ixlib=rb-4.1.0&q=80&w=1080" },
   { id: 2, name: "Eiffel Tower", url: "https://images.unsplash.com/photo-1570097703229-b195d6dd291f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlaWZmZWwlMjB0b3dlciUyMHBhcmlzfGVufDF8fHx8MTc2MTAzOTA1MHww&ixlib=rb-4.1.0&q=80&w=1080" },
@@ -161,13 +159,13 @@ export function BackgroundSelectionScreen({
     if (selectedBackgrounds.includes(id)) {
       setSelectedBackgrounds(selectedBackgrounds.filter(bgId => bgId !== id));
     } else {
+      // Check total count - maximum 5 backgrounds total (including extra backgrounds)
+      if (selectedBackgrounds.length >= maxDigitalBackgrounds) {
+        return;
+      }
+      
       // Check if this is an uploaded custom background (string ID starting with "uploaded-custom-")
       const isUploadedCustomBackground = typeof id === 'string' && String(id).startsWith('uploaded-custom-');
-      
-      // Check if this is an extra background (free, doesn't count toward limit)
-      const isExtraBackground = typeof id === 'string' && 
-        String(id).startsWith('custom-') && 
-        !String(id).startsWith('uploaded-custom-');
       
       if (isUploadedCustomBackground) {
         // Remove any previously selected uploaded custom backgrounds
@@ -175,39 +173,10 @@ export function BackgroundSelectionScreen({
           typeof bgId === 'number' || !String(bgId).startsWith('uploaded-custom-')
         );
         
-        // Count chargeable backgrounds (excluding extra backgrounds)
-        const chargeableCount = nonUploadedCustomBackgrounds.filter(bgId => {
-          const isExtra = typeof bgId === 'string' && 
-            String(bgId).startsWith('custom-') && 
-            !String(bgId).startsWith('uploaded-custom-');
-          return !isExtra;
-        }).length;
-        
-        // Check if we've reached the limit (1 included + 4 additional = 5 max)
-        if (chargeableCount >= MAX_ADDITIONAL_BACKGROUNDS + 1) {
-          return;
-        }
-        
         // Add the new uploaded custom background (auto-deselecting any previous uploaded custom background)
         setSelectedBackgrounds([...nonUploadedCustomBackgrounds, id]);
-      } else if (!isExtraBackground) {
-        // Regular background - check limit
-        // Count chargeable backgrounds (excluding extra backgrounds)
-        const chargeableCount = selectedBackgrounds.filter(bgId => {
-          const isExtra = typeof bgId === 'string' && 
-            String(bgId).startsWith('custom-') && 
-            !String(bgId).startsWith('uploaded-custom-');
-          return !isExtra;
-        }).length;
-        
-        // Check if we've reached the limit (1 included + 4 additional = 5 max)
-        if (chargeableCount >= MAX_ADDITIONAL_BACKGROUNDS + 1) {
-          return;
-        }
-        
-        setSelectedBackgrounds([...selectedBackgrounds, id]);
       } else {
-        // Extra background - no limit, always allow
+        // Regular or extra background - just add it
         setSelectedBackgrounds([...selectedBackgrounds, id]);
       }
     }
@@ -243,16 +212,8 @@ export function BackgroundSelectionScreen({
       typeof bgId === 'number' || !String(bgId).startsWith('uploaded-custom-')
     );
     
-    // Count chargeable backgrounds (excluding extra backgrounds)
-    const chargeableCount = nonUploadedCustomBackgrounds.filter(bgId => {
-      const isExtra = typeof bgId === 'string' && 
-        String(bgId).startsWith('custom-') && 
-        !String(bgId).startsWith('uploaded-custom-');
-      return !isExtra;
-    }).length;
-    
-    // Only auto-select if we're under the limit
-    if (chargeableCount < MAX_ADDITIONAL_BACKGROUNDS + 1) {
+    // Only auto-select if we're under the total limit of 5 backgrounds
+    if (nonUploadedCustomBackgrounds.length < maxDigitalBackgrounds) {
       setSelectedBackgrounds([...nonUploadedCustomBackgrounds, uploadedBg.id]);
     } else {
       // Just add to available backgrounds, don't auto-select
@@ -293,9 +254,9 @@ export function BackgroundSelectionScreen({
         onClick={handleGearClick}
         variant="ghost"
         size="sm"
-        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-20 h-20"
+        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-40 h-40"
       >
-        <Settings className="w-10 h-10" />
+        <Settings className="w-20 h-20" />
       </Button>
       
       <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -327,24 +288,11 @@ export function BackgroundSelectionScreen({
                 <span className="font-semibold">Pricing:</span> First background is included. Each additional background is <span className="font-semibold">$2.50</span>.
               </p>
             </div>
-            {(() => {
-              // Count chargeable backgrounds (excluding extra backgrounds)
-              const chargeableCount = selectedBackgrounds.filter(bgId => {
-                const isExtra = typeof bgId === 'string' && 
-                  String(bgId).startsWith('custom-') && 
-                  !String(bgId).startsWith('uploaded-custom-');
-                return !isExtra;
-              }).length;
-              
-              if (chargeableCount >= MAX_ADDITIONAL_BACKGROUNDS + 1) {
-                return (
-                  <p className="text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-2">
-                    Maximum of {MAX_ADDITIONAL_BACKGROUNDS + 1} chargeable backgrounds reached. You can still select Extra Backgrounds (free) or deselect a background to choose a different one.
-                  </p>
-                );
-              }
-              return null;
-            })()}
+            {selectedBackgrounds.length >= maxDigitalBackgrounds && (
+              <p className="text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-2">
+                Maximum of {maxDigitalBackgrounds} backgrounds reached.
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
@@ -524,7 +472,7 @@ export function BackgroundSelectionScreen({
               onClick={onNext}
               disabled={selectedBackgrounds.length === 0}
               size="lg"
-              className="h-16 text-lg flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 active:scale-95 disabled:opacity-50 transition-all select-none"
+              className="h-16 text-lg flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all select-none"
             >
               Next
               <ArrowRight className="ml-2" />

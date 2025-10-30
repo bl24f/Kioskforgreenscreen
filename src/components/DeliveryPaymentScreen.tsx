@@ -156,9 +156,9 @@ export function DeliveryPaymentScreen({
         onClick={handleGearClick}
         variant="ghost"
         size="sm"
-        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-20 h-20"
+        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-40 h-40"
       >
-        <Settings className="w-10 h-10" />
+        <Settings className="w-20 h-20" />
       </Button>
       
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -195,7 +195,7 @@ export function DeliveryPaymentScreen({
                       id="email"
                       className="h-6 w-6"
                     />
-                    <Label htmlFor="email" className="cursor-pointer flex-1 text-lg text-slate-800">
+                    <Label className="cursor-pointer flex-1 text-lg text-slate-800">
                       Email (Digital Delivery)
                     </Label>
                   </div>
@@ -217,7 +217,7 @@ export function DeliveryPaymentScreen({
                       id="prints"
                       className="h-6 w-6"
                     />
-                    <Label htmlFor="prints" className="cursor-pointer flex-1 text-lg text-slate-800">
+                    <Label className="cursor-pointer flex-1 text-lg text-slate-800">
                       Prints (+$2.00 per photo)
                     </Label>
                   </div>

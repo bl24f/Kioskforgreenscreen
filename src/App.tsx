@@ -102,7 +102,8 @@ type AppAction =
   | { type: "SET_ENABLE_CUSTOM_BACKGROUNDS"; payload: boolean }
   | { type: "SET_IS_FREE_DAY"; payload: boolean }
   | { type: "SET_SHOW_FREE_DAY_OPTION"; payload: boolean }
-  | { type: "RESET_ALL" };
+  | { type: "RESET_ALL" }
+  | { type: "RESET_SESSION" };
 
 const initialState: AppState = {
   currentStep: "home",
@@ -212,6 +213,24 @@ function appReducer(
       return { ...state, showFreeDayOption: action.payload };
     case "RESET_ALL":
       return initialState;
+    case "RESET_SESSION":
+      return {
+        ...state,
+        currentStep: "home",
+        visitedSteps: new Set(),
+        deliveryMethod: ["email"],
+        numberOfPhotos: "1",
+        numberOfEmailPhotos: "1",
+        paymentType: "cash",
+        selectedBackgrounds: [],
+        backgroundOutputs: {},
+        capturedPhotos: [],
+        userName: "",
+        emails: ["", "", "", "", ""],
+        numberOfPeople: "1",
+        customerNumber: "",
+        orderNumber: "",
+      };
     default:
       return state;
   }
@@ -243,6 +262,10 @@ export default function App() {
 
   const resetAll = useCallback(() => {
     dispatch({ type: "RESET_ALL" });
+  }, []);
+
+  const resetSession = useCallback(() => {
+    dispatch({ type: "RESET_SESSION"});
   }, []);
 
   // Initialize background outputs when backgrounds are selected
@@ -438,7 +461,7 @@ export default function App() {
             onBack={() =>
               dispatch({ type: "SET_STEP", payload: "home" })
             }
-            onCancel={resetAll}
+            onCancel={resetSession}
             setBasePrice={(value) =>
               dispatch({
                 type: "SET_BASE_PRICE",
@@ -524,7 +547,7 @@ export default function App() {
                 payload: "delivery",
               })
             }
-            onCancel={resetAll}
+            onCancel={resetSession}
             basePrice={state.basePrice}
             setBasePrice={(value) =>
               dispatch({
@@ -613,7 +636,7 @@ export default function App() {
                 payload: "background",
               })
             }
-            onCancel={resetAll}
+            onCancel={resetSession}
             basePrice={state.basePrice}
             setBasePrice={(value) =>
               dispatch({
@@ -787,7 +810,7 @@ export default function App() {
                 payload: "confirmation",
               })
             }
-            onCancel={resetAll}
+            onCancel={resetSession}
             basePrice={state.basePrice}
             setBasePrice={(value) =>
               dispatch({
@@ -853,13 +876,13 @@ export default function App() {
             customerNumber={state.customerNumber}
             orderNumber={state.orderNumber}
             capturedPhotos={state.capturedPhotos}
-            onComplete={resetAll}
+            onComplete={resetSession}
           />
         )}
       </div>
       {state.currentStep !== "home" && (
         <AFKWarningDialog
-          onTimeout={resetAll}
+          onTimeout={resetSession}
           initialTimeoutSeconds={30}
           warningTimeoutSeconds={20}
         />

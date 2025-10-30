@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +77,61 @@ const ALL_BACKGROUNDS = [
   { id: 12, name: "London Bridge" },
 ];
 
+function useHoldIncrement(
+  min: number,
+  max: number,
+  step: number = 1
+) {
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const setValueRef = useRef<((value: number) => void) | null>(null);
+  const directionRef = useRef<"up" | "down" | null>(null);
+  const currentValueRef = useRef<number>(0);
+
+  const stop = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const start = (currentValue: number, setValue: (value: number) => void, direction: "up" | "down") => {
+    stop(); // clear any existing interval/timeout first
+
+    // Store refs for use in timeout/interval
+    currentValueRef.current = currentValue;
+    setValueRef.current = setValue;
+    directionRef.current = direction;
+
+    // Immediate single increment/decrement
+    const newValue = direction === "up"
+      ? Math.min(max, currentValue + step)
+      : Math.max(min, currentValue - step);
+    currentValueRef.current = newValue;
+    setValue(newValue);
+
+    // Wait 1 second before starting rapid increment
+    timeoutRef.current = setTimeout(() => {
+      intervalRef.current = setInterval(() => {
+        if (setValueRef.current && directionRef.current) {
+          const nextValue = directionRef.current === "up"
+            ? Math.min(max, currentValueRef.current + step)
+            : Math.max(min, currentValueRef.current - step);
+          currentValueRef.current = nextValue;
+          setValueRef.current(nextValue);
+        }
+      }, 150);
+    }, 1000);
+  };
+
+  return { start, stop };
+}
+
+
 export function AdminDialog({
   open,
   onOpenChange,
@@ -115,6 +170,7 @@ export function AdminDialog({
     }
   }, [open]);
 
+  
   const handleClose = () => {
     onOpenChange(false);
   };
@@ -189,6 +245,11 @@ export function AdminDialog({
     }
   };
 
+  // Create one hook instance per field - both buttons use the SAME hook
+  const emailHold = useHoldIncrement(1, 50);
+  const printHold = useHoldIncrement(1, 50);
+  const bgHold = useHoldIncrement(1, 50);
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogPortal>
@@ -205,7 +266,7 @@ export function AdminDialog({
         </DialogHeader>
 
         <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 bg-slate-800 border-slate-700">
+            <TabsList className="grid grid-flow-col auto-cols-max bg-slate-800 border-slate-700">
               <TabsTrigger value="general" className="text-xs sm:text-sm data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <DollarSign className="w-4 h-4 mr-1" />
                 <span className="hidden sm:inline">General</span>
@@ -392,7 +453,9 @@ export function AdminDialog({
                         variant="outline"
                         size="icon"
                         className="h-12 w-12 active:scale-95 transition-transform select-none border-3 border-slate-500 bg-slate-700 hover:bg-slate-600 hover:border-slate-400 shadow-md text-white"
-                        onClick={() => setMaxNumberOfEmails(Math.max(1, maxNumberOfEmails - 1))}
+                        onMouseDown={() => emailHold.start(maxNumberOfEmails, setMaxNumberOfEmails, "down")}
+                        onMouseUp={() => emailHold.stop()}
+                        onMouseLeave={() => emailHold.stop()}
                         disabled={!availableDeliveryMethods.includes("email") || maxNumberOfEmails <= 1}
                       >
                         <Minus className="h-5 w-5" />
@@ -405,7 +468,9 @@ export function AdminDialog({
                         variant="outline"
                         size="icon"
                         className="h-12 w-12 active:scale-95 transition-transform select-none border-3 border-slate-500 bg-slate-700 hover:bg-slate-600 hover:border-slate-400 shadow-md text-white"
-                        onClick={() => setMaxNumberOfEmails(Math.min(50, maxNumberOfEmails + 1))}
+                        onMouseDown={() => emailHold.start(maxNumberOfEmails, setMaxNumberOfEmails, "up")}
+                        onMouseUp={() => emailHold.stop()}
+                        onMouseLeave={() => emailHold.stop()}
                         disabled={!availableDeliveryMethods.includes("email") || maxNumberOfEmails >= 50}
                       >
                         <Plus className="h-5 w-5" />
@@ -427,7 +492,9 @@ export function AdminDialog({
                         variant="outline"
                         size="icon"
                         className="h-12 w-12 active:scale-95 transition-transform select-none border-3 border-slate-500 bg-slate-700 hover:bg-slate-600 hover:border-slate-400 shadow-md text-white"
-                        onClick={() => setMaxNumberOfPrints(Math.max(1, maxNumberOfPrints - 1))}
+                        onMouseDown={() => printHold.start(maxNumberOfPrints, setMaxNumberOfPrints, "down")}
+                        onMouseUp={() => printHold.stop()}
+                        onMouseLeave={() => printHold.stop()}
                         disabled={!availableDeliveryMethods.includes("prints") || maxNumberOfPrints <= 1}
                       >
                         <Minus className="h-5 w-5" />
@@ -440,7 +507,9 @@ export function AdminDialog({
                         variant="outline"
                         size="icon"
                         className="h-12 w-12 active:scale-95 transition-transform select-none border-3 border-slate-500 bg-slate-700 hover:bg-slate-600 hover:border-slate-400 shadow-md text-white"
-                        onClick={() => setMaxNumberOfPrints(Math.min(50, maxNumberOfPrints + 1))}
+                        onMouseDown={() => printHold.start(maxNumberOfPrints, setMaxNumberOfPrints, "up")}
+                        onMouseUp={() => printHold.stop()}
+                        onMouseLeave={() => printHold.stop()}
                         disabled={!availableDeliveryMethods.includes("prints") || maxNumberOfPrints >= 50}
                       >
                         <Plus className="h-5 w-5" />
@@ -462,7 +531,9 @@ export function AdminDialog({
                         variant="outline"
                         size="icon"
                         className="h-12 w-12 active:scale-95 transition-transform select-none border-3 border-slate-500 bg-slate-700 hover:bg-slate-600 hover:border-slate-400 shadow-md text-white"
-                        onClick={() => setMaxDigitalBackgrounds(Math.max(1, maxDigitalBackgrounds - 1))}
+                        onMouseDown={() => bgHold.start(maxDigitalBackgrounds, setMaxDigitalBackgrounds, "down")}
+                        onMouseUp={() => bgHold.stop()}
+                        onMouseLeave={() => bgHold.stop()}
                         disabled={!availableDeliveryMethods.includes("email") || maxDigitalBackgrounds <= 1}
                       >
                         <Minus className="h-5 w-5" />
@@ -475,7 +546,9 @@ export function AdminDialog({
                         variant="outline"
                         size="icon"
                         className="h-12 w-12 active:scale-95 transition-transform select-none border-3 border-slate-500 bg-slate-700 hover:bg-slate-600 hover:border-slate-400 shadow-md text-white"
-                        onClick={() => setMaxDigitalBackgrounds(Math.min(50, maxDigitalBackgrounds + 1))}
+                        onMouseDown={() => bgHold.start(maxDigitalBackgrounds, setMaxDigitalBackgrounds, "up")}
+                        onMouseUp={() => bgHold.stop()}
+                        onMouseLeave={() => bgHold.stop()}
                         disabled={!availableDeliveryMethods.includes("email") || maxDigitalBackgrounds >= 50}
                       >
                         <Plus className="h-5 w-5" />

@@ -89,6 +89,7 @@ export function UserInfoScreen({
   const [numberOfEmailFields, setNumberOfEmailFields] = useState(1);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const [activeKeyboardId, setActiveKeyboardId] = useState<string | null>(null);
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -212,9 +213,9 @@ export function UserInfoScreen({
         onClick={handleGearClick}
         variant="ghost"
         size="sm"
-        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-20 h-20"
+        className="fixed top-24 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none z-50 w-40 h-40"
       >
-        <Settings className="w-10 h-10" />
+        <Settings className="w-20 h-20" />
       </Button>
       <div className="max-w-3xl w-full bg-white rounded-2xl p-8 shadow-2xl border border-slate-200">
         <div className="flex items-center justify-between mb-8">
@@ -241,6 +242,9 @@ export function UserInfoScreen({
               onChange={setUserName}
               placeholder="Enter your name"
               className="h-16 text-lg"
+              isKeyboardVisible={activeKeyboardId === "userName"}
+              onFocus={() => setActiveKeyboardId("userName")}
+              onCloseKeyboard={() => setActiveKeyboardId(null)}
             />
           </div>
 
@@ -260,7 +264,7 @@ export function UserInfoScreen({
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <KeyboardInput
-                        id={isFirst ? "userEmail" : undefined}
+                        id={`userEmail-${index}`}
                         value={emailValue}
                         onChange={(value) => handleEmailChange(index, value)}
                         onBlur={() => handleEmailBlur(index, emailValue)}
@@ -268,6 +272,9 @@ export function UserInfoScreen({
                         placeholder={isFirst ? "Enter your email address" : `Additional email address ${index + 1}`}
                         className={`h-16 text-lg ${hasError ? "!border-red-500 focus-visible:ring-red-500" : ""}`}
                         fieldLabel={isFirst ? "Email Address" : `Email Address ${index + 1}`}
+                        isKeyboardVisible={activeKeyboardId === `userEmail-${index}`}
+                        onFocus={() => setActiveKeyboardId(`userEmail-${index}`)}
+                        onCloseKeyboard={() => setActiveKeyboardId(null)}
                       />
                     </div>
                     {!isFirst && (
@@ -365,7 +372,7 @@ export function UserInfoScreen({
               onClick={onNext}
               disabled={!isEmail1Valid}
               size="lg"
-              className="h-16 text-lg flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed active:scale-95 transition-all select-none"
+              className="h-16 text-lg flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all select-none"
             >
               Next
               <ArrowRight className="ml-2" />

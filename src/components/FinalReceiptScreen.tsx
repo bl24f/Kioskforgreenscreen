@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Separator } from "./ui/separator";
@@ -82,6 +82,10 @@ export function FinalReceiptScreen({
   onComplete,
 }: FinalReceiptScreenProps) {
   const [isProcessing, setIsProcessing] = useState(true);
+
+  const [printScale, setPrintScale] = useState(1);
+  const printableRef = useRef<HTMLDivElement>(null);
+
   // Use the order number passed from props
   const orderNumber = propsOrderNumber;
 
@@ -97,6 +101,30 @@ export function FinalReceiptScreen({
 
     return () => clearTimeout(timer);
   }, [customerNumber, orderNumber]);
+
+  // Separate standard, extra, and uploaded custom backgrounds
+  const standardBackgrounds = backgrounds.filter(bg => selectedBackgrounds.includes(bg.id));
+  
+  // Extra backgrounds: string IDs that start with "custom-" but NOT "uploaded-custom-" (FREE)
+  const extraBackgroundIds = selectedBackgrounds.filter(id => 
+    typeof id === 'string' && 
+    String(id).startsWith('custom-') && 
+    !String(id).startsWith('uploaded-custom-')
+  ) as string[];
+  const selectedExtraBackgrounds = extraBackgroundIds.map(id => ({
+    id,
+    name: customBackgroundNames[id] || id
+  }));
+  
+  // Uploaded custom backgrounds: string IDs that start with "uploaded-custom-" ($5.00 each)
+  const uploadedCustomBackgroundIds = selectedBackgrounds.filter(id => 
+    typeof id === 'string' && 
+    String(id).startsWith('uploaded-custom-')
+  ) as string[];
+  const selectedUploadedCustomBackgrounds = uploadedCustomBackgroundIds.map(id => ({
+    id,
+    name: customBackgroundNames[id] || id
+  }));
 
   const saveOrderToHistory = (orderNum: string) => {
     if (!orderNum) return;
@@ -127,7 +155,12 @@ export function FinalReceiptScreen({
         typeof id === 'string' && String(id).startsWith('uploaded-custom-')
       );
       const uploadedCustomBackgroundCost = uploadedCustomBackgroundIds.length * 5;
-      const totalChargableBackgrounds = standardBackgrounds.length + uploadedCustomBackgroundIds.length;
+      const extraBackgroundIds = safeSelectedBackgrounds.filter(id => 
+        typeof id === 'string' && 
+        String(id).startsWith('custom-') && 
+        !String(id).startsWith('uploaded-custom-')
+      );
+      const totalChargableBackgrounds = standardBackgrounds.length + extraBackgroundIds.length + uploadedCustomBackgroundIds.length;
       const additionalBackgroundCount = Math.max(0, totalChargableBackgrounds - 1);
       const additionalBackgroundCost = additionalBackgroundCount * 2.5;
       const totalPrice = isFreeDay ? 0 : price + printCost + uploadedCustomBackgroundCost + additionalBackgroundCost;
@@ -180,36 +213,12 @@ export function FinalReceiptScreen({
   const photos = parseInt(numberOfPhotos) || 1;
   const printCost = deliveryMethod.includes("prints") ? photos * 2 : 0;
   
-  // Separate standard, extra, and uploaded custom backgrounds
-  const standardBackgrounds = backgrounds.filter(bg => selectedBackgrounds.includes(bg.id));
-  
-  // Extra backgrounds: string IDs that start with "custom-" but NOT "uploaded-custom-" (FREE)
-  const extraBackgroundIds = selectedBackgrounds.filter(id => 
-    typeof id === 'string' && 
-    String(id).startsWith('custom-') && 
-    !String(id).startsWith('uploaded-custom-')
-  ) as string[];
-  const selectedExtraBackgrounds = extraBackgroundIds.map(id => ({
-    id,
-    name: customBackgroundNames[id] || id
-  }));
-  
-  // Uploaded custom backgrounds: string IDs that start with "uploaded-custom-" ($5.00 each)
-  const uploadedCustomBackgroundIds = selectedBackgrounds.filter(id => 
-    typeof id === 'string' && 
-    String(id).startsWith('uploaded-custom-')
-  ) as string[];
-  const selectedUploadedCustomBackgrounds = uploadedCustomBackgroundIds.map(id => ({
-    id,
-    name: customBackgroundNames[id] || id
-  }));
-  
   // Calculate cost for uploaded custom backgrounds ($5.00 each)
   const uploadedCustomBackgroundCost = uploadedCustomBackgroundIds.length * 5;
   
   // Calculate additional background cost: First background is free, each additional is $2.50
   // Count total non-extra backgrounds (standard + uploaded custom)
-  const totalChargableBackgrounds = standardBackgrounds.length + uploadedCustomBackgroundIds.length;
+  const totalChargableBackgrounds = standardBackgrounds.length + extraBackgroundIds.length + uploadedCustomBackgroundIds.length;
   const additionalBackgroundCount = Math.max(0, totalChargableBackgrounds - 1);
   const additionalBackgroundCost = additionalBackgroundCount * 2.5;
   
@@ -234,8 +243,27 @@ export function FinalReceiptScreen({
   });
 
   const handlePrint = () => {
-    window.print();
+    const printable = printableRef.current;
+    if (!printable) return;
+  
+    // Allow layout to settle before measuring
+    requestAnimationFrame(() => {
+      const pageHeightInPixels = 10.5 * 96; // ~10.5 inches in px (1in ≈ 96px)
+      const contentHeight = printable.scrollHeight;
+  
+      // If content exceeds one page, calculate shrink factor
+      if (contentHeight > pageHeightInPixels) {
+        const scaleFactor = pageHeightInPixels / contentHeight;
+        setPrintScale(scaleFactor);
+      } else {
+        setPrintScale(1);
+      }
+  
+      // Delay slightly so React re-renders with new scale
+      setTimeout(() => window.print(), 100);
+    });
   };
+
 
   if (isProcessing) {
     return (
@@ -255,33 +283,49 @@ export function FinalReceiptScreen({
         @media print {
           @page {
             margin: 0.15in;
-            size: auto;
+            size: A4 portrait;
           }
+      
+          html, body {
+            height: 100%;
+            overflow: visible !important;
+          }
+      
           body * {
             visibility: hidden;
           }
+      
           .printable-receipt, .printable-receipt * {
             visibility: visible;
           }
+      
           .printable-receipt {
             position: absolute;
-            left: 0;
+            left: 50%;
             top: 0;
             width: 100%;
+            transform: scale(var(--print-scale, 1)) translateX(-50%);
+            transform-origin: top center;
+            overflow: visible !important; /* prevent clipping */
           }
+      
           .no-print {
             display: none !important;
           }
+      
           .customer-copy {
             display: none !important;
           }
+      
           .printed-copy, .cameraman-section {
             display: block !important;
           }
+      
           .receipt-copy {
             margin: 0;
             padding: 0.1in;
           }
+      
           .cut-line {
             text-align: center;
             padding: 0.03in 0;
@@ -289,8 +333,22 @@ export function FinalReceiptScreen({
             border-bottom: 1px dashed #666;
             margin: 0.02in 0;
           }
+      
+          .printable-receipt * {
+            line-height: 1.1;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+          }
+      
+          .receipt-copy,
+          .printed-copy,
+          .cameraman-section {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
         }
       `}</style>
+
 
       <div className="min-h-screen w-screen bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 flex items-start justify-center pt-4 pb-4 px-4 overflow-auto">
         <div className="max-w-3xl w-full bg-white rounded-2xl p-3 shadow-2xl">
@@ -302,7 +360,14 @@ export function FinalReceiptScreen({
           </div>
 
           {/* Printable Receipt */}
-          <div className="printable-receipt space-y-0.5">
+          <div
+            ref={printableRef}
+            className="printable-receipt space-y-0.5"
+            style={{
+              '--print-scale': printScale,
+            } as React.CSSProperties}
+          >
+
             {/* CUSTOMER COPY - No stamps, merged disclaimers */}
             <div className="border-3 border-gray-800 p-2 receipt-copy customer-copy">
               <div className="text-center mb-0.5 pb-0.5 border-b-2 border-dashed border-gray-400">
@@ -373,7 +438,7 @@ export function FinalReceiptScreen({
               
               {selectedExtraBackgrounds.length > 0 && (
                 <div className="mb-1">
-                  <h3 className="text-xs mb-0.5">Extra Backgrounds (FREE):</h3>
+                  <h3 className="text-xs mb-0.5">Extra Backgrounds:</h3>
                   <div className="border-2 border-gray-800 p-1 bg-gray-50 text-[10px]">
                     {selectedExtraBackgrounds.map((bg, index) => (
                       <div key={bg.id} className="py-0">
@@ -422,12 +487,6 @@ export function FinalReceiptScreen({
                       <span>${additionalBackgroundCost.toFixed(2)}</span>
                     </div>
                   )}
-                  {selectedExtraBackgrounds.length > 0 && (
-                    <div className="flex justify-between">
-                      <span>Extra Backgrounds ({selectedExtraBackgrounds.length}):</span>
-                      <span className="text-green-600">FREE</span>
-                    </div>
-                  )}
                   {uploadedCustomBackgroundCost > 0 && (
                     <div className="flex justify-between">
                       <span>Custom Backgrounds ({uploadedCustomBackgroundIds.length} x $5.00):</span>
@@ -452,14 +511,14 @@ export function FinalReceiptScreen({
               <div className="border-t-2 border-gray-300 pt-1 mt-1">
                 {deliveryMethod.includes("prints") && (
                   <div className="bg-yellow-50 border-2 border-yellow-400 p-1 mb-1">
-                    <p className="text-center text-[10px] mb-0.5">⚠️ PICKUP INSTRUCTIONS ⚠️</p>
+                    <p className="text-center text-[10px] mb-0.5">⚠ PICKUP INSTRUCTIONS ⚠</p>
                     <p className="text-center text-[10px]">Return at end of night to pick up prints. Show this receipt to attendant.</p>
                   </div>
                 )}
 
                 {deliveryMethod.includes("email") && emailCount > 0 && (
                   <div className="bg-blue-50 border-2 border-blue-400 p-1 mb-1">
-                    <p className="text-center text-[10px] mb-0.5">���� EMAIL DELIVERY NOTICE 📧</p>
+                    <p className="text-center text-[10px] mb-0.5">✉ EMAIL DELIVERY NOTICE ✉</p>
                     <p className="text-center text-[10px]">If you don't receive your email within 2 business days, contact us with your Order Number.</p>
                   </div>
                 )}
@@ -527,7 +586,7 @@ export function FinalReceiptScreen({
               {standardBackgrounds.length > 0 && (
                 <div className="mb-1">
                   <h3 className="text-xs mb-0.5">Standard Backgrounds:</h3>
-                  <div className="border-2 border-gray-800 p-1 bg-gray-50 text-[10px]">
+                  <div className="border-2 border-gray-800 p-1 bg-gray-50 text-[10px] flex flex-wrap gap-2">
                     {standardBackgrounds.map((bg, index) => (
                       <div key={bg.id} className="py-0">
                         {index + 1}. {bg.name}
@@ -540,7 +599,7 @@ export function FinalReceiptScreen({
               {selectedExtraBackgrounds.length > 0 && (
                 <div className="mb-1">
                   <h3 className="text-xs mb-0.5">Extra Backgrounds (FREE):</h3>
-                  <div className="border-2 border-gray-800 p-1 bg-gray-50 text-[10px]">
+                  <div className="border-2 border-gray-800 p-1 bg-gray-50 text-[10px] flex flex-wrap gap-2">
                     {selectedExtraBackgrounds.map((bg, index) => (
                       <div key={bg.id} className="py-0">
                         {index + 1}. {bg.name}
@@ -553,7 +612,7 @@ export function FinalReceiptScreen({
               {selectedUploadedCustomBackgrounds.length > 0 && (
                 <div className="mb-1">
                   <h3 className="text-xs mb-0.5">Custom Backgrounds:</h3>
-                  <div className="border-2 border-gray-800 p-1 bg-gray-50 text-[10px]">
+                  <div className="border-2 border-gray-800 p-1 bg-gray-50 text-[10px] flex flex-wrap gap-2">
                     {selectedUploadedCustomBackgrounds.map((bg, index) => (
                       <div key={bg.id} className="py-0">
                         {index + 1}. {bg.name}
@@ -586,12 +645,6 @@ export function FinalReceiptScreen({
                     <div className="flex justify-between">
                       <span>Additional Backgrounds ({additionalBackgroundCount} x $2.50):</span>
                       <span>${additionalBackgroundCost.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {selectedExtraBackgrounds.length > 0 && (
-                    <div className="flex justify-between">
-                      <span>Extra Backgrounds ({selectedExtraBackgrounds.length}):</span>
-                      <span className="text-green-600">FREE</span>
                     </div>
                   )}
                   {uploadedCustomBackgroundCost > 0 && (
@@ -627,7 +680,7 @@ export function FinalReceiptScreen({
               {deliveryMethod.includes("prints") && (
                 <div className="grid grid-cols-2 gap-1 mb-1">
                   <div className="bg-yellow-50 border-2 border-yellow-400 p-1">
-                    <p className="text-center text-[10px] mb-0.5">⚠️ PICKUP STAMP ⚠️</p>
+                    <p className="text-center text-[10px] mb-0.5">⚠ PICKUP STAMP ⚠</p>
                     <div className="border border-gray-400 h-6 bg-gray-50 mt-0.5 flex items-center justify-center">
                       <p className="text-[9px] text-gray-400">Prints Received Stamp</p>
                     </div>
@@ -659,7 +712,7 @@ export function FinalReceiptScreen({
 
             {/* CUT LINE DIVIDER */}
             <div className="cut-line hidden print:block">
-              <p className="text-xs">✂️ CUT HERE ✂️</p>
+              <p className="text-xs">✂ CUT HERE ✂</p>
             </div>
 
             {/* CAMERAMAN COPY - Condensed, functional only, no stamps or disclaimers */}
@@ -705,7 +758,7 @@ export function FinalReceiptScreen({
               {standardBackgrounds.length > 0 && (
                 <div className="mb-0.5">
                   <p className="text-[9px] mb-0">Standard Backgrounds:</p>
-                  <div className="border border-black p-0.5 bg-white text-[8px] leading-tight">
+                  <div className="border border-black p-0.5 bg-white text-[8px] leading-tight flex flex-wrap gap-2">
                     {standardBackgrounds.map((bg, index) => (
                       <div key={bg.id}>{index + 1}. {bg.name} (ID:{bg.id})</div>
                     ))}
@@ -715,8 +768,8 @@ export function FinalReceiptScreen({
               
               {selectedExtraBackgrounds.length > 0 && (
                 <div className="mb-0.5">
-                  <p className="text-[9px] mb-0">Extra Backgrounds (FREE):</p>
-                  <div className="border border-black p-0.5 bg-white text-[8px] leading-tight">
+                  <p className="text-[9px] mb-0">Extra Backgrounds:</p>
+                  <div className="border border-black p-0.5 bg-white text-[8px] leading-tight flex flex-wrap gap-2">
                     {selectedExtraBackgrounds.map((bg, index) => (
                       <div key={bg.id}>{index + 1}. {bg.name}</div>
                     ))}
@@ -727,7 +780,7 @@ export function FinalReceiptScreen({
               {selectedUploadedCustomBackgrounds.length > 0 && (
                 <div className="mb-0.5">
                   <p className="text-[9px] mb-0">Custom Backgrounds:</p>
-                  <div className="border border-black p-0.5 bg-white text-[8px] leading-tight">
+                  <div className="border border-black p-0.5 bg-white text-[8px] leading-tight flex flex-wrap gap-2">
                     {selectedUploadedCustomBackgrounds.map((bg, index) => (
                       <div key={bg.id}>{index + 1}. {bg.name}</div>
                     ))}
@@ -735,22 +788,20 @@ export function FinalReceiptScreen({
                 </div>
               )}
 
-              {/* Email Addresses - Redacted for privacy */}
+              {/* Email Addresses */}
               {emailCount > 0 && (
                 <div className="mb-0.5">
                   <p className="text-[9px] mb-0">Emails ({emailCount}):</p>
-                  <div className="border border-black p-0.5 bg-white text-[8px] leading-tight">
-                    {actualEmails.map((email, index) => {
-                      // Redact email - show only first 2 chars and domain
-                      const [localPart, domain] = email.split('@');
-                      const redacted = localPart.length > 2 
-                        ? `${localPart.substring(0, 2)}***@${domain}` 
-                        : `***@${domain}`;
-                      return <div key={index}>{index + 1}. {redacted}</div>;
-                    })}
+                  <div className="border border-black p-0.5 bg-white text-[8px] leading-tight break-all flex flex-wrap gap-2">
+                    {actualEmails.map((email, index) => (
+                      <div key={index}>
+                        {index + 1}. {email}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
+
 
               {/* Pricing - Condensed */}
               <div className="border border-black p-0.5 mb-0.5 bg-gray-50 text-[9px]">

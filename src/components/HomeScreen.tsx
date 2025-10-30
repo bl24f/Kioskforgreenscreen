@@ -96,22 +96,22 @@ export function HomeScreen({
         onClick={handleGearClick}
         variant="ghost"
         size="sm"
-        className="absolute top-4 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none"
+        className="absolute top-4 right-4 opacity-0 hover:opacity-0 active:scale-95 transition-all select-none w-40 h-40"
       >
-        <Settings className="w-5 h-5" />
+        <Settings className="w-20 h-20" />
       </Button>
 
       <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 flex flex-col items-center justify-center space-y-8">
           {/* Logo */}
-          <div className="bg-white rounded-3xl p-10 shadow-2xl border-4 border-green-500/20">
+          <div className="bg-white rounded-3xl p-10 border-2 border-green-500/20">
             <Logo size="lg" showText={true} />
           </div>
 
           {/* Theme Display */}
           {theme && (
-            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl text-center border border-slate-200">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl text-center border border-slate-200">
               <p className="text-slate-600">Today's Special Theme</p>
               <p className="text-3xl text-green-600 mt-2">{theme}</p>
             </div>
@@ -121,14 +121,21 @@ export function HomeScreen({
           <Button
             onClick={onStart}
             size="lg"
-            className="h-32 w-full max-w-2xl text-4xl bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 active:scale-95 text-gray-900 rounded-2xl shadow-2xl transform transition-all select-none"
-          >
+            className="
+              h-32 w-full max-w-2xl text-4xl
+              bg-gradient-to-t from-amber-400 to-yellow-300 shadow-2xl
+              border-4 border-amber-500
+              hover:from-amber-500 hover:to-yellow-300 hover:shadow-xl
+              active:from-amber-600 active:to-yellow-600 active:scale-95
+              text-gray-900 hover:text-black rounded-2xl
+              transform transition-all select-none
+            ">
             TAP HERE TO START
           </Button>
         </div>
 
         {/* Instructions */}
-        <div className="bg-white rounded-2xl p-8 shadow-2xl border border-slate-200">
+        <div className="bg-white rounded-2xl p-8 border border-slate-200">
           <h2 className="text-3xl mb-6 text-slate-900">How to Use</h2>
           <ol className="space-y-4 text-lg text-slate-700">
             <li className="flex gap-3">
@@ -149,11 +156,11 @@ export function HomeScreen({
             </li>
             <li className="flex gap-3">
               <span className="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center">5</span>
-              <span>Take a short photo</span>
+              <span>Take a short photo (optional)</span>
             </li>
             <li className="flex gap-3">
               <span className="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center">6</span>
-              <span>Complete payment and grab your photos!</span>
+              <span>Complete payment and grab you receipt!</span>
             </li>
           </ol>
         </div>

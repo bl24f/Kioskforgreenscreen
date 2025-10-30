@@ -17,12 +17,12 @@ export function HelpButton() {
       {/* Floating Help Button */}
       <Button
         onClick={() => setShowHelp(true)}
-        variant="outline"
+        variant="primary"
         size="icon"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg bg-card border-border hover:bg-accent hover:border-primary/50 transition-all active:scale-95 select-none"
+        className="fixed bottom-12 right-12 z-50 w-16 h-16 rounded-full shadow-xl bg-card border-border hover:bg-accent hover:border-primary/50 transition-all active:scale-95 select-none"
         aria-label="Help"
       >
-        <HelpCircle className="w-6 h-6" />
+        <HelpCircle className="!w-8 !h-8" />
       </Button>
 
       {/* Help Dialog */}
@@ -74,14 +74,14 @@ export function HelpButton() {
                 <span>
                   Take a short photo. This is only used to match your face to
                   the final green screen picture; it will not be part of your
-                  actual photo
+                  actual photo (Optional)
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center">
                   6
                 </span>
-                <span>Complete payment and grab your photos!</span>
+                <span>Complete payment and grab you receipt!</span>
               </li>
             </ol>
           </div>

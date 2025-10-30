@@ -46,7 +46,7 @@ export function calculatePricing(
   
   // Calculate additional background cost: First background is free, each additional is $2.50
   // Count total non-extra backgrounds (standard + uploaded custom)
-  const totalChargableBackgrounds = standardBackgrounds.length + uploadedCustomBackgroundIds.length;
+  const totalChargableBackgrounds = standardBackgrounds.length + extraBackgroundIds.length + uploadedCustomBackgroundIds.length;
   const additionalBackgroundCount = Math.max(0, totalChargableBackgrounds - 1);
   const additionalBackgroundCost = additionalBackgroundCount * 2.5;
   
@@ -123,13 +123,6 @@ export function PriceSummary({
           <div className="flex justify-between text-slate-700">
             <span>Additional Backgrounds ({pricing.additionalBackgroundCount}):</span>
             <span>${pricing.additionalBackgroundCost.toFixed(2)}</span>
-          </div>
-        )}
-        
-        {pricing.extraBackgrounds > 0 && (
-          <div className="flex justify-between text-slate-700">
-            <span>Extra Backgrounds ({pricing.extraBackgrounds}):</span>
-            <span className="text-green-600">FREE</span>
           </div>
         )}
         
